@@ -1,0 +1,11 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#0F172A"/>
+  <circle cx="1015" cy="100" r="160" fill="#D4A017" fill-opacity="0.24"/>
+  <circle cx="185" cy="555" r="150" fill="#F5CD55" fill-opacity="0.15"/>
+  <rect x="58" y="58" width="1084" height="514" rx="36" fill="white" fill-opacity="0.04" stroke="white" stroke-opacity="0.08"/>
+  <text x="600" y="185" text-anchor="middle" fill="#FFFDF8" font-size="34" font-family="Georgia, serif" letter-spacing="6">DHARM-THE DIGITAL ROOM</text>
+  <text x="600" y="280" text-anchor="middle" fill="#FFF8E7" font-size="70" font-weight="700" font-family="Georgia, serif">Free AI Marketing Consultation</text>
+  <text x="600" y="355" text-anchor="middle" fill="#E5E7EB" font-size="30" font-family="Arial, sans-serif">Receive a customized AI marketing plan for your business</text>
+  <rect x="423" y="414" width="354" height="76" rx="38" fill="#F5CD55"/>
+  <text x="600" y="462" text-anchor="middle" fill="#0F172A" font-size="26" font-weight="700" font-family="Arial, sans-serif">Book Free Consultation</text>
+</svg>

@@ -1,152 +1,142 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
-type FormValues = {
-  fullName: string;
-  email: string;
-  whatsapp: string;
-  businessName: string;
-  website: string;
-  message: string;
-};
-
-type FormErrors = Partial<Record<keyof FormValues, string>>;
-
-const initialValues: FormValues = {
-  fullName: "",
-  email: "",
-  whatsapp: "",
-  businessName: "",
-  website: "",
-  message: "",
-};
-
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const whatsappPattern = /^[+()\d\s-]{7,}$/;
-
-function isValidOptionalUrl(value: string) {
-  if (!value.trim()) return true;
-
-  try {
-    new URL(value);
-    return true;
-  } catch {
-    try {
-      new URL(`https://${value}`);
-      return true;
-    } catch {
-      return false;
-    }
+declare global {
+  interface Window {
+    fd?: (...args: any[]) => void;
+    FlodeskObject?: string;
   }
 }
 
-function validate(values: FormValues) {
-  const errors: FormErrors = {};
+const FORM_ID = "6a7c7933a7eb185e80b45e68";
+const ROOT_SELECTOR = `.ff-${FORM_ID}`;
+const EMBED_PATH = "/flodesk-embed.html";
+const REDIRECT_DELAY_MS = 1500;
 
-  if (!values.fullName.trim()) errors.fullName = "Full name is required.";
-  if (!values.email.trim()) errors.email = "Active email is required.";
-  else if (!emailPattern.test(values.email.trim()))
-    errors.email = "Please enter a valid email address.";
+function ensureFlodeskAssets() {
+  if (!document.querySelector('link[data-flodesk-style="preload"]')) {
+    const preload = document.createElement("link");
+    preload.rel = "preload";
+    preload.href = "https://assets.flodesk.com/flodesk-sans.css";
+    preload.as = "style";
+    preload.setAttribute("data-flodesk-style", "preload");
+    document.head.append(preload);
+  }
 
-  if (!values.whatsapp.trim()) errors.whatsapp = "WhatsApp number is required.";
-  else if (!whatsappPattern.test(values.whatsapp.trim()))
-    errors.whatsapp = "Please enter a valid WhatsApp number.";
+  if (!document.querySelector('link[data-flodesk-style="sheet"]')) {
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = "https://assets.flodesk.com/flodesk-sans.css";
+    stylesheet.setAttribute("data-flodesk-style", "sheet");
+    document.head.append(stylesheet);
+  }
 
-  if (!values.businessName.trim())
-    errors.businessName = "Business name is required.";
+  if (!document.querySelector('script[data-flodesk-universal="module"]')) {
+    const version = `?v=${Math.floor(Date.now() / (120 * 1000)) * 60}`;
+    const moduleScript = document.createElement("script");
+    moduleScript.async = true;
+    moduleScript.type = "module";
+    moduleScript.src = `https://assets.flodesk.com/universal.mjs${version}`;
+    moduleScript.setAttribute("data-flodesk-universal", "module");
+    document.head.append(moduleScript);
+  }
 
-  if (!isValidOptionalUrl(values.website))
-    errors.website = "Please enter a valid website or Facebook URL.";
+  if (!document.querySelector('script[data-flodesk-universal="nomodule"]')) {
+    const version = `?v=${Math.floor(Date.now() / (120 * 1000)) * 60}`;
+    const legacyScript = document.createElement("script");
+    legacyScript.async = true;
+    legacyScript.noModule = true;
+    legacyScript.src = `https://assets.flodesk.com/universal.js${version}`;
+    legacyScript.setAttribute("data-flodesk-universal", "nomodule");
+    document.head.append(legacyScript);
+  }
+}
 
-  return errors;
+function loadFlodesk(root: HTMLElement, onSuccess: () => void) {
+  ensureFlodeskAssets();
+
+  const start = () => {
+    if (typeof window.fd !== "function") return false;
+
+    window.fd("form:handle", {
+      formId: FORM_ID,
+      rootEl: ROOT_SELECTOR,
+    });
+
+    const observer = new MutationObserver(() => {
+      if (root.getAttribute("data-ff-stage") === "success") {
+        observer.disconnect();
+        onSuccess();
+      }
+    });
+
+    observer.observe(root, {
+      attributes: true,
+      attributeFilter: ["data-ff-stage"],
+    });
+
+    if (root.getAttribute("data-ff-stage") === "success") {
+      observer.disconnect();
+      onSuccess();
+    }
+
+    return true;
+  };
+
+  if (start()) return;
+
+  const poll = window.setInterval(() => {
+    if (start()) {
+      window.clearInterval(poll);
+    }
+  }, 150);
+
+  window.setTimeout(() => {
+    window.clearInterval(poll);
+  }, 10000);
 }
 
 export default function CTAForm() {
   const router = useRouter();
-  const [values, setValues] = useState<FormValues>(initialValues);
-  const [errors, setErrors] = useState<FormErrors>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [touched, setTouched] = useState<Record<keyof FormValues, boolean>>({
-    fullName: false,
-    email: false,
-    whatsapp: false,
-    businessName: false,
-    website: false,
-    message: false,
-  });
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const timerRef = useRef<number | null>(null);
 
-  const fieldMeta = useMemo(
-    () => [
-      {
-        name: "fullName" as const,
-        label: "Full Name",
-        placeholder: "Enter your full name",
-        required: true,
-        type: "text" as const,
-      },
-      {
-        name: "email" as const,
-        label: "Active Email",
-        placeholder: "Enter your active email",
-        required: true,
-        type: "email" as const,
-      },
-      {
-        name: "whatsapp" as const,
-        label: "WhatsApp Number",
-        placeholder: "Enter your WhatsApp number",
-        required: true,
-        type: "tel" as const,
-      },
-      {
-        name: "businessName" as const,
-        label: "Business Name",
-        placeholder: "Enter your business name",
-        required: true,
-        type: "text" as const,
-      },
-      {
-        name: "website" as const,
-        label: "Website or Facebook URL",
-        placeholder: "https://example.com",
-        required: false,
-        type: "url" as const,
-      },
-    ],
-    []
-  );
+  useEffect(() => {
+    let cancelled = false;
 
-  function updateField<K extends keyof FormValues>(key: K, value: FormValues[K]) {
-    setValues((current) => ({ ...current, [key]: value }));
-    setErrors((current) => ({ ...current, [key]: undefined }));
-  }
+    const run = async () => {
+      const response = await fetch(EMBED_PATH, { cache: "no-store" });
+      const html = await response.text();
 
-  function blurField<K extends keyof FormValues>(key: K) {
-    setTouched((current) => ({ ...current, [key]: true }));
-    setErrors(validate(values));
-  }
+      if (cancelled || !containerRef.current) return;
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const nextErrors = validate(values);
-    setTouched({
-      fullName: true,
-      email: true,
-      whatsapp: true,
-      businessName: true,
-      website: true,
-      message: true,
-    });
-    setErrors(nextErrors);
+      containerRef.current.innerHTML = html;
+      const root = containerRef.current.querySelector<HTMLElement>(ROOT_SELECTOR);
 
-    if (Object.keys(nextErrors).length > 0) return;
+      if (!root) return;
 
-    setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 700));
-    router.push("/thank-you");
-  }
+      loadFlodesk(root, () => {
+        if (timerRef.current) {
+          window.clearTimeout(timerRef.current);
+        }
+
+        timerRef.current = window.setTimeout(() => {
+          router.push("/thanks");
+        }, REDIRECT_DELAY_MS);
+      });
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+      if (timerRef.current) {
+        window.clearTimeout(timerRef.current);
+      }
+    };
+  }, [router]);
 
   return (
     <section
@@ -167,70 +157,13 @@ export default function CTAForm() {
           </p>
         </div>
 
-        <form className="mt-8 space-y-5" onSubmit={handleSubmit} noValidate>
-          <div className="grid gap-5 md:grid-cols-2">
-            {fieldMeta.map((field) => {
-              const isInvalid = touched[field.name] && Boolean(errors[field.name]);
-              return (
-                <label key={field.name} className="block">
-                  <span className="mb-2 block text-sm font-semibold text-ink-800">
-                    {field.label}
-                    {field.required ? " *" : ""}
-                  </span>
-                  <input
-                    type={field.type}
-                    value={values[field.name]}
-                    placeholder={field.placeholder}
-                    onChange={(event) =>
-                      updateField(field.name, event.target.value)
-                    }
-                    onBlur={() => blurField(field.name)}
-                    className={`field-ring w-full rounded-2xl border bg-white px-4 py-4 text-base text-ink-900 outline-none placeholder:text-ink-400 ${
-                      isInvalid ? "border-red-400" : "border-ink-200"
-                    }`}
-                    aria-invalid={isInvalid}
-                    aria-describedby={isInvalid ? `${field.name}-error` : undefined}
-                  />
-                  {isInvalid ? (
-                    <p
-                      id={`${field.name}-error`}
-                      className="mt-2 text-sm font-medium text-red-600"
-                    >
-                      {errors[field.name]}
-                    </p>
-                  ) : null}
-                </label>
-              );
-            })}
-          </div>
+        <div className="mt-8 overflow-hidden rounded-[1.75rem] border border-ink-200 bg-white shadow-sm">
+          <div ref={containerRef} className="flodesk-shell" />
+        </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-semibold text-ink-800">
-              Anything You Want to Say
-            </span>
-            <textarea
-              value={values.message}
-              placeholder="Tell us anything helpful about your business, goals, or current challenge"
-              onChange={(event) => updateField("message", event.target.value)}
-              onBlur={() => blurField("message")}
-              rows={6}
-              className="field-ring w-full rounded-2xl border border-ink-200 bg-white px-4 py-4 text-base text-ink-900 outline-none placeholder:text-ink-400"
-            />
-          </label>
-
-          <div className="flex flex-col items-stretch gap-4 pt-2 sm:items-center">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="inline-flex w-full items-center justify-center rounded-full bg-gold-300 px-8 py-4 text-base font-bold text-ink-950 shadow-glow transition hover:-translate-y-0.5 hover:bg-gold-200 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
-            >
-              {isSubmitting ? "Submitting..." : "Book Free Consultation"}
-            </button>
-            <p className="text-center text-sm text-ink-600">
-              We respect your privacy. No spam.
-            </p>
-          </div>
-        </form>
+        <p className="mt-4 text-center text-sm text-ink-600">
+          We respect your privacy. No spam.
+        </p>
       </div>
     </section>
   );

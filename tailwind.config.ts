@@ -28,8 +28,8 @@ const config: Config = {
         glow: "0 0 0 1px rgba(212, 160, 23, 0.14), 0 20px 80px rgba(212, 160, 23, 0.16)",
       },
       fontFamily: {
-        sans: ["var(--font-body)", "ui-sans-serif", "system-ui"],
-        serif: ["var(--font-display)", "Georgia", "serif"],
+        sans: ["Aptos", "ui-sans-serif", "system-ui", "sans-serif"],
+        serif: ["Georgia", "Cambria", "Times New Roman", "serif"],
       },
       backgroundImage: {
         "premium-radial":

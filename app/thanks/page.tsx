@@ -45,20 +45,14 @@ export default function ThanksPage() {
               Watch the video below
             </p>
             <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-ink-200 bg-ink-950 shadow-soft">
-              <div className="aspect-video bg-[radial-gradient(circle_at_top,_rgba(245,205,85,0.26),_transparent_40%),linear-gradient(135deg,_#0f172a_0%,_#111827_55%,_#1f2937_100%)] p-6 text-white">
-                <div className="flex h-full items-center justify-center rounded-[1.2rem] border border-white/10 bg-white/5 text-center">
-                  <div className="max-w-md">
-                    <div className="mx-auto mb-4 flex h-18 w-18 items-center justify-center rounded-full border border-gold-200 bg-gold-300/95 text-ink-950 shadow-glow">
-                      <span className="text-2xl font-black">▶</span>
-                    </div>
-                    <p className="text-lg font-semibold">Dummy video placeholder</p>
-                    <p className="mt-2 text-sm leading-6 text-white/75">
-                      Replace this block with your real video embed when you are
-                      ready. For now, it shows the exact premium layout the
-                      page will use.
-                    </p>
-                  </div>
-                </div>
+              <div className="aspect-video">
+                <iframe
+                  className="h-full w-full"
+                  src="https://www.youtube.com/embed/B4N11q_hLMc?rel=0"
+                  title="Thank-you page video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
               </div>
             </div>
             <p className="mt-4 text-center text-sm text-ink-600">
